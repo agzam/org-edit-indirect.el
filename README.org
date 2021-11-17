@@ -1,0 +1,21 @@
+**** Extends ~org-edit-special~ so it can be used to edit (almost) anything in Org-mode, things like: ~quote~, ~verse~, ~comment~ blocks, etc.
+***** Installation
+The package has not been published yet, use your package manager (or whatever you usually do to get it in your config)
+
+Doom users:
+
+packages.el:
+#+begin_src emacs-lisp
+(package! org-edit-indirect :recipe (:host github :repo "agzam/org-edit-indirect.el"))
+#+end_src
+
+config.el:
+#+begin_src emacs-lisp
+(use-package! org-edit-indirect
+  :after org)
+#+end_src
+
+***** Usage
+
+- Move cursor to any source, verse, comment, quote block; or a paragraph, headline, property drawer, or a plain list
+- ~<C-c '>~ (unless you've changed the default keybinding to ~org-edit-special~)

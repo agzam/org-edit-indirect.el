@@ -65,7 +65,7 @@ the original function doesn't let you."
 (add-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit)
 (add-hook 'edit-indirect-after-creation-hook #'outline-show-all)
 
-(define-key org-mode-map (kbd "C-c '") #'org-edit-indirect-special+)
+(define-key org-mode-map [remap org-edit-special] #'org-edit-indirect-special+)
 
 (provide 'org-edit-indirect)
 
