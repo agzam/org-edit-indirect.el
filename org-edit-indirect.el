@@ -62,10 +62,21 @@ the original function doesn't let you."
       (goto-char (point-max))
       (newline))))
 
-(add-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit)
-(add-hook 'edit-indirect-after-creation-hook #'outline-show-all)
-
-(define-key org-mode-map [remap org-edit-special] #'org-edit-indirect-special+)
+;;;###autoload
+(define-minor-mode org-edit-indirect-mode
+  "Edit any Org block with \\<org-mode-map>\\[org-edit-special]."
+  :global nil
+  :lighter ""
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map
+              [remap org-edit-special] #'org-edit-indirect-special+)
+            map)
+  (if org-edit-indirect-mode
+      (progn
+        (add-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit nil t)
+        (add-hook 'edit-indirect-after-creation-hook #'outline-show-all nil t))
+    (remove-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit t)
+    (remove-hook 'edit-indirect-after-creation-hook #'outline-show-all t)))
 
 (provide 'org-edit-indirect)
 
