@@ -49,18 +49,18 @@ the original function doesn't let you."
       ((or `quote-block `verse-block `comment-block
            `paragraph `headline `property-drawer
            `plain-list `item)
-          (org-edit-indirect-generic-block element))
+       (org-edit-indirect-generic-block element))
       (_ (org-edit-special arg)))))
 
 (defun org-edit-indirect--before-commit ()
   ;; if not done this way, edit-indirect chews up the EOF and #+end_quote ends
   ;; up appended to the previous line, breaking the structure of the block
   (when (edit-indirect-buffer-indirect-p)
-   (goto-char (point-max))
-   (forward-char -1)
-   (when (not (looking-at "$"))
-     (goto-char (point-max))
-     (newline))))
+    (goto-char (point-max))
+    (forward-char -1)
+    (when (not (looking-at "$"))
+      (goto-char (point-max))
+      (newline))))
 
 (add-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit)
 (add-hook 'edit-indirect-after-creation-hook #'outline-show-all)
