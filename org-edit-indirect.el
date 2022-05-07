@@ -88,6 +88,9 @@ This is added to `edit-indirect-before-commit-hook' by
     (remove-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit t)
     (remove-hook 'edit-indirect-after-creation-hook #'outline-show-all t)))
 
+;; Accommodate existing users before the minor mode refactor
+(add-hook 'org-mode-hook #'org-edit-indirect-mode)
+
 (provide 'org-edit-indirect)
 
 ;;; org-edit-indirect.el ends here
