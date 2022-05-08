@@ -14,10 +14,8 @@
 ;;
 ;;; Commentary:
 ;;
-;;  Description
-;;
-;; Edit Org-mode elements like `org-edit-special' but for things that not covered, like
-;; quote, verse and comment blocks
+;; Extension for `(org-edit-special)` that includes things that are not covered, like
+;; quote, verse, and comment blocks
 ;;
 ;;; Code:
 
