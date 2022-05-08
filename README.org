@@ -12,10 +12,10 @@ packages.el:
 config.el:
 #+begin_src emacs-lisp
 (use-package! org-edit-indirect
-  :after org)
+  :hook (org-mode . org-edit-indirect-mode))
 #+end_src
 
 ***** Usage
 
 - Move cursor to any source, verse, comment, quote block; or a paragraph, headline, property drawer, or a plain list
-- ~<C-c '>~ (unless you've changed the default keybinding to ~org-edit-special~)
+- ~<C-c '>~ (or whatever ~org-edit-special~ is normally bound to)
