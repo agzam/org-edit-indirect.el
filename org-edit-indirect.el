@@ -1,4 +1,4 @@
-;;; org-edit-indirect.el --- Description -*- lexical-binding: t; -*-
+;;; org-edit-indirect.el --- Edit anything, not just source blocks -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Ag Ibragimomv
 ;;
@@ -10,12 +10,31 @@
 ;; Homepage: https://github.com/agzam/org-edit-indirect.el
 ;; Package-Requires: ((emacs "25.1") (edit-indirect "0.1.6") (org "9.0"))
 ;;
-;; This file is not part of GNU Emacs.
+;; This file is not part of GNU Emacs
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <http://www.gnu.org/licenses/>.
 ;;
 ;;; Commentary:
 ;;
 ;; Extension for `(org-edit-special)` that includes things that are not covered, like
 ;; quote, verse, and comment blocks
+;;
+;;; Usage:
+;;
+;; After installing the package, add the following hook:
+;;
+;; (add-hook 'org-mode-hook #'org-edit-indirect-mode)
 ;;
 ;;; Code:
 
@@ -86,8 +105,6 @@ This is added to `edit-indirect-before-commit-hook' by
     (remove-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit t)
     (remove-hook 'edit-indirect-after-creation-hook #'outline-show-all t)))
 
-;; Accommodate existing users before the minor mode refactor
-(add-hook 'org-mode-hook #'org-edit-indirect-mode)
 
 (provide 'org-edit-indirect)
 
