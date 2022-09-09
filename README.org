@@ -1,21 +1,59 @@
-**** Extends ~org-edit-special~ so it can be used to edit (almost) anything in Org-mode, things like: ~quote~, ~verse~, ~comment~ blocks, etc.
-***** Installation
-The package has not been published yet, use your package manager (or whatever you usually do to get it in your config)
+By default, Org-mode doesn't let you edit things in an indirect buffer except for source blocks.
 
-Doom users:
+This package extends ~org-edit-special~ so it can be used to edit (almost) any type of block in Org-mode, things like ~quote~, ~verse~, ~comment~ blocks, etc.
 
-packages.el:
+** Installation
+It's on MELPA. Load it using your preferred way.
+
+*** Doom users:
+~packages.el:~
 #+begin_src emacs-lisp
-(package! org-edit-indirect :recipe (:host github :repo "agzam/org-edit-indirect.el"))
+(package! org-edit-indirect)
 #+end_src
 
-config.el:
+~config.el:~
 #+begin_src emacs-lisp
 (use-package! org-edit-indirect
   :hook (org-mode . org-edit-indirect-mode))
 #+end_src
 
-***** Usage
+** Usage
+- Move the cursor to any source, verse, comment, quote block; drawer; or a paragraph, headline, property drawer, or a plain list
+- ~<C-c '>~ (or whatever ~org-edit-special~ normally binds to)
 
-- Move cursor to any source, verse, comment, quote block; or a paragraph, headline, property drawer, or a plain list
-- ~<C-c '>~ (or whatever ~org-edit-special~ is normally bound to)
+** Advanced usage
+It's possible to set the major mode of the indirect buffer, based on the type of the block. I didn't want this package to be too intrusive, so I didn't implement this feature as part of the package. Here's an example of how that can be achieved:
+
+#+begin_src emacs-lisp
+(defun edit-indirect-guess-mode-fn+ (parent-buffer beg _end)
+  "Guess the major mode for an edit-indirect buffer."
+  (let* ((type (with-current-buffer parent-buffer
+                 (cond
+                  ;; set markdown-mode for quote & verse blocks
+                  ((and (eq major-mode 'org-mode)
+                        (when-let ((s (save-mark-and-excursion
+                                        (goto-char (- beg 1))
+                                        (thing-at-point 'symbol))))
+                         (string-match-p
+                          "+begin_quote\\|+begin_verse" s)))
+                   :quote)
+                  ;; json-mode for results drawer blocks,
+                  ;; src blocks like:
+                  ;; #+begin_src sh :results drawer
+                  ((and (eq major-mode 'org-mode)
+                        (when-let ((s (save-mark-and-excursion
+                                        (goto-char (- beg 1))
+                                        (backward-word)
+                                        (thing-at-point 'word))))
+                          (string-match-p "results" s)))
+                   :results-drawer)
+                  ;; fallback to org-mode for the rest
+                  ((eq major-mode 'org-mode) :org-mode)))))
+    (cl-case type
+      (:quote (markdown-mode))
+      (:results-drawer (json-mode))
+      (:org-mode (org-mode))
+      (t (normal-mode)))))
+
+(setq edit-indirect-guess-mode-function #'edit-indirect-guess-mode-fn+)
+#+end_src
