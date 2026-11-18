@@ -3,7 +3,7 @@
 
 Changes to the project, following Keep a Changelog conventions.
 
-* [1.2.0] - 2026-11-15
+* [1.2.0] - 2026-11-17
 
 ** Added
 - ~C-c '~ edits special blocks, such as ~#+begin_note~, and center blocks
