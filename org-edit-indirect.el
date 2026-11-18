@@ -1,14 +1,16 @@
 ;;; org-edit-indirect.el --- Edit anything, not just source blocks -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2021 Ag Ibragimomv
+;; Copyright (C) 2021-2026 Ag Ibragimov
 ;;
-;; Author: Ag Ibragimomv <https://github.com/agzam>
-;; Maintainer: Ag Ibragimomv <agzam.ibragimov@gmail.com>
+;; Author: Ag Ibragimov <https://github.com/agzam>
+;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Created: May, 2021
-;; Version: 1.1.0
+;; Version: 1.2.0
 ;; Keywords: convenience extensions outlines
 ;; Homepage: https://github.com/agzam/org-edit-indirect.el
-;; Package-Requires: ((emacs "27") (edit-indirect "0.1.10") (org "9.0"))
+;; Package-Requires: ((emacs "29.1") (edit-indirect "0.1.10") (org "9.6"))
+;;
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;
 ;; This file is not part of GNU Emacs
 
@@ -39,72 +41,86 @@
 ;;; Code:
 
 (require 'edit-indirect)
+(require 'org)
 (require 'org-element)
 
-(defun org-edit-indirect-generic-block (org-element)
-  "Edit ORG-ELEMENT with `edit-indirect-region'."
-  (interactive)
-  (let* ((el-type (org-element-type (org-element-context org-element)))
-         (parent (org-element-property :parent org-element))
-         (beg (pcase el-type
-                ((or `quote-block `verse-block `comment-block `plain-list 'drawer 'paragraph 'headline)
-                 (org-element-property :contents-begin org-element))
-                (_ (org-element-property :begin (or parent org-element)))))
-         (end (pcase el-type
-                ((or `quote-block `verse-block `comment-block `plain-list 'drawer 'paragraph 'headline)
-                 (org-element-property :contents-end org-element))
-                (_ (org-element-property :end (or parent org-element))))))
-    (edit-indirect-region beg end :display)))
+(defconst org-edit-indirect--blocks
+  '(quote-block verse-block special-block center-block
+    drawer property-drawer plain-list)
+  "Element types edited whole from anywhere inside them.")
 
-(defun org-edit-indirect-special+ (&optional arg)
-  "Call a special editor for the element at point.
+(defconst org-edit-indirect--org-objects
+  '(footnote-reference inline-src-block latex-fragment timestamp)
+  "Object types that `org-edit-special' has its own editor for.")
 
-This extends `org-edit-special' to edit blocks that it doesn't
-support.
+(defun org-edit-indirect--target (element)
+  "Return the element to edit when point is at ELEMENT, or nil."
+  (let ((type (org-element-type element)))
+    (cond
+     ((memq type (cons 'headline org-edit-indirect--blocks)) element)
+     ((memq type '(item node-property paragraph))
+      (or (org-element-lineage element org-edit-indirect--blocks)
+          (and (eq type 'paragraph) element))))))
 
-ARG is passed to `org-edit-special'."
-  (interactive "P")
-  (let* ((element (org-element-at-point))
-         (context (org-element-context element)))
-    (pcase (org-element-type context)
-      ((or `quote-block `verse-block `comment-block
-           `paragraph `headline `property-drawer
-           `plain-list `item 'drawer 'link)
-       (org-edit-indirect-generic-block element))
-      (_ (org-edit-special arg)))))
+(defun org-edit-indirect--bounds (element)
+  "Return (BEG . END) of ELEMENT's contents, or of ELEMENT when it has none."
+  (if-let* ((beg (org-element-property :contents-begin element))
+            (end (org-element-property :contents-end element)))
+      (cons beg end)
+    (cons (org-element-property :post-affiliated element)
+          (save-excursion
+            (goto-char (org-element-property :end element))
+            (skip-chars-backward " \t\n")
+            (line-beginning-position 2)))))
 
 (defun org-edit-indirect--before-commit ()
-  "Prevent edit-indirect from chewing up EOF.
-
-Without this, edit-indirect would chew up the EOF, causing
-#+end_quote to be appended to the previous line, breaking the
-structure of the block.
-
-This is added to `edit-indirect-before-commit-hook' by
-`org-edit-indirect-mode'."
-  (when (edit-indirect-buffer-indirect-p)
+  "End the edit-indirect buffer with a newline.
+Otherwise the line after the edited region, such as #+end_quote, joins
+its last line."
+  (save-excursion
     (goto-char (point-max))
-    (forward-char -1)
-    (when (not (looking-at "$"))
-      (goto-char (point-max))
-      (newline))))
+    (unless (bolp)
+      (insert "\n"))))
+
+;; Kept when the edit buffer changes its major mode.
+(put 'org-edit-indirect--before-commit 'permanent-local-hook t)
+
+(defun org-edit-indirect-generic-block (org-element)
+  "Edit ORG-ELEMENT in an edit-indirect buffer and return that buffer.
+The buffer holds the contents of ORG-ELEMENT, or the whole element when
+it has none."
+  (barf-if-buffer-read-only)
+  (pcase-let ((`(,beg . ,end) (org-edit-indirect--bounds org-element)))
+    (with-current-buffer (edit-indirect-region beg end :display)
+      (add-hook 'edit-indirect-before-commit-hook
+                #'org-edit-indirect--before-commit nil t)
+      (outline-show-all)
+      (current-buffer))))
+
+(defun org-edit-indirect-special (&optional arg)
+  "Edit the Org element at point in an edit-indirect buffer.
+Call `org-edit-special' with ARG instead where Org has an editor of its
+own, or where this package has nothing to edit."
+  (interactive "P" org-mode)
+  (let* ((element (org-element-at-point))
+         (object (org-element-type (org-element-context element)))
+         (target (unless (memq object org-edit-indirect--org-objects)
+                   (org-edit-indirect--target element))))
+    (if target
+        (org-edit-indirect-generic-block target)
+      (org-edit-special arg))))
+
+(define-obsolete-function-alias 'org-edit-indirect-special+
+  #'org-edit-indirect-special "1.2.0")
 
 ;;;###autoload
 (define-minor-mode org-edit-indirect-mode
   "Edit any Org block with \\<org-mode-map>\\[org-edit-special]."
-  :global nil
   :lighter ""
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map
-              [remap org-edit-special] #'org-edit-indirect-special+)
-            map)
-  (if org-edit-indirect-mode
-      (progn
-        (add-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit nil t)
-        (add-hook 'edit-indirect-after-creation-hook #'outline-show-all nil t))
-    (remove-hook 'edit-indirect-before-commit-hook #'org-edit-indirect--before-commit t)
-    (remove-hook 'edit-indirect-after-creation-hook #'outline-show-all t)))
-
+              [remap org-edit-special] #'org-edit-indirect-special)
+            map))
 
 (provide 'org-edit-indirect)
 

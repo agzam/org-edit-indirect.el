@@ -1,0 +1,42 @@
+#+TITLE: org-edit-indirect.el changelog
+#+AUTHOR: Ag Ibragimov
+
+Changes to the project, following Keep a Changelog conventions.
+
+* [1.2.0] - 2026-11-15
+
+** Added
+- ~C-c '~ edits special blocks, such as ~#+begin_note~, and center blocks
+
+** Changed
+- ~C-c '~ on a paragraph inside a quote, special or center block, a drawer or a list edits the whole block, drawer or list, where it edited only the paragraph
+- ~org-edit-indirect-mode~ only takes ~C-c '~ over: the command sets up its edit buffer itself, so it works the same when bound to another key without the mode
+- the command is ~org-edit-indirect-special~, and ~org-edit-indirect-special+~ an obsolete alias for it
+- requires Emacs 29.1 and Org 9.6
+
+** Fixed
+- ~C-c '~ on a heading without a body, or on an empty quote or verse block or drawer, edits the whole element, the heading line or the delimiters included; it failed with "Wrong type argument: integer-or-marker-p, nil"
+- ~C-c '~ on a comment block opens Org's own editor, which escapes lines that start with ~*~ or ~#+~; it failed with the same error
+- a commit no longer joins the last line of the edited text to the line after it, such as ~#+end_quote~
+- ~C-c '~ on a link edits the paragraph or the heading body around it, where it edited the whole section, the parent subtree or the whole buffer
+- ~C-c '~ on bold, italic or other markup edits the paragraph or the heading body around it, where it said "No special environment to edit here"
+- ~C-c '~ on the ~:PROPERTIES:~ line edits the properties, where it edited the whole section, and so does ~C-c '~ on a property line, where it said "No special environment to edit here"
+- ~C-c '~ in a read-only Org buffer says "Buffer is read-only" at once, where it opened an edit buffer that could not commit
+- ~M-x~ no longer offers ~org-edit-indirect-generic-block~, which failed with "Wrong number of arguments"
+- the author's name in the file header
+
+* [1.1.0] - 2022-09-08
+
+** Added
+- ~org-edit-indirect-mode~ takes ~C-c '~ over in an Org buffer; turn it on with ~(add-hook 'org-mode-hook #'org-edit-indirect-mode)~, by Kisaragi Hiu in [[https://github.com/agzam/org-edit-indirect.el/pull/2][agzam/org-edit-indirect.el#2]]
+- ~C-c '~ edits drawers and links
+
+** Changed
+- loading the package no longer changes ~org-mode-map~ and edit-indirect's hooks; ~org-edit-indirect-mode~ does
+- ~C-c '~ on a heading edits its body, and on a paragraph the paragraph, where both edited the element around them
+- requires Emacs 27 and edit-indirect 0.1.10
+
+* [1.0.0] - 2021-11-16
+
+** Added
+- ~C-c '~ in an Org buffer edits quote, verse and comment blocks, headings, paragraphs, property drawers, lists and items in an edit-indirect buffer, and leaves everything else to ~org-edit-special~
